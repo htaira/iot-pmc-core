@@ -8,7 +8,7 @@ from time import sleep
 
 mqtt_broker="example.com"
 #mqtt_broker="iot.eclipse.org"
-identity="pc1"
+identity="CHANGE_ME"
 
 # for RPi 26pin GPIO (Model A/Model B)
 POWER = 18 #GPIO:24
