@@ -1,0 +1,29 @@
+- name: build ActiveMQ broker
+  hosts: mqtt-broker
+  become: yes
+  tasks:
+    - name: yum - apply all updates
+      yum: name=* state=latest
+    - name: download repo file
+      get_url:
+        url="https://copr.fedoraproject.org/coprs/lkiesow/apache-activemq-dist/repo/epel-6/lkiesow-apache-activemq-dist-epel-6.repo"
+        dest=/etc/yum.repos.d/
+    - name: install OpenJDK
+      yum: name=java-1.7.0-openjdk.x86_64 state=latest
+    - name: install ActiveMQ
+      yum: name=activemq-dist state=latest
+    - name: install ActiveMQ client
+      yum: name=activemq-dist-client state=latest
+    - name: configure activemq
+      lineinfile: dest=/etc/activemq/activemq.xml line="            <transportConnector name=\"mqtt+ws\" uri=\"ws://0.0.0.0:1884maximumConnections=1000&amp;wireFormat.maxFrameSize=104857600\"/>" insertafter="^\s*<transportConnector name=\"mqtt\""
+    - name: start ActiveMQ service
+      service: name=activemq state=running enabled=yes
+    - name: configure iptables TCP:8161
+      lineinfile: dest=/etc/sysconfig/iptables line="-A INPUT -m state --state NEW -m tcp -p tcp --dport 8161 -j ACCEPT" insertafter="^:OUTPUT"
+    - name: configure iptables TCP:1883 - MQTT
+      lineinfile: dest=/etc/sysconfig/iptables line="-A INPUT -m state --state NEW -m tcp -p tcp --dport 1883 -j ACCEPT" insertafter="^:OUTPUT"
+    - name: configure iptables TCP:1884 - MQTT over WebSocket
+      lineinfile: dest=/etc/sysconfig/iptables line="-A INPUT -m state --state NEW -m tcp -p tcp --dport 1884 -j ACCEPT" insertafter="^:OUTPUT"
+    - name: reload iptables rules
+      service: name=iptables state=reloaded enabled=yes
+
